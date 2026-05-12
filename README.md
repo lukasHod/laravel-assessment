@@ -27,12 +27,12 @@ The app will be available at http://localhost:8000
 
 ## Output
 
-When you're done, submit the following:
+When you're done, send the result of your process to `hiring@aiapply.co` and include the following:
 
-1. **GitHub repo** — fork this repo, push your work to a new branch, and share the link
-2. **Screen recording** — upload to YouTube (unlisted) or Google Drive and share the link
+1. **GitHub repo** — fork this repo, push your work to a new branch, and include the repo link
+2. **Video / screen recording** — upload to YouTube (unlisted) or Google Drive and include the link
 
-Both links are required.
+Your email should include both the GitHub repo and the video.
 
 ## Assessment Instructions
 
