@@ -1,7 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
+use App\Enums\TaskPriority;
+use App\Enums\TaskStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +15,6 @@ class Task extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
         'name',
         'description',
         'status',
@@ -19,9 +22,14 @@ class Task extends Model
         'due_date',
     ];
 
-    protected $casts = [
-        'due_date' => 'date',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'status' => TaskStatus::class,
+            'priority' => TaskPriority::class,
+            'due_date' => 'date',
+        ];
+    }
 
     public function user(): BelongsTo
     {
