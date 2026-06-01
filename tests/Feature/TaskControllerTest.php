@@ -50,6 +50,117 @@ final class TaskControllerTest extends TestCase
         $this->getJson('/api/tasks')->assertStatus(401);
     }
 
+    public function testIndexFiltersTasksByNameSearch(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->for($user)->create(['name' => 'Fix login bug']);
+        Task::factory()->for($user)->create(['name' => 'Write unit tests']);
+        Task::factory()->for($user)->create(['name' => 'Fix dashboard crash']);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/tasks?search=fix')
+            ->assertOk()
+            ->assertJsonCount(2)
+            ->assertJsonFragment(['name' => 'Fix login bug'])
+            ->assertJsonFragment(['name' => 'Fix dashboard crash']);
+    }
+
+    public function testIndexSearchReturnsEmptyWhenNoMatch(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->for($user)->create(['name' => 'Deploy to production']);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/tasks?search=xyz_no_match')
+            ->assertOk()
+            ->assertJsonCount(0);
+    }
+
+    public function testIndexReturnsAllTasksWhenSearchIsEmpty(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->count(3)->for($user)->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/tasks?search=')
+            ->assertOk()
+            ->assertJsonCount(3);
+    }
+
+    public function testIndexFiltersBySingleStatus(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->for($user)->create(['status' => 'todo']);
+        Task::factory()->for($user)->create(['status' => 'in_progress']);
+        Task::factory()->for($user)->create(['status' => 'done']);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/tasks?status[]=todo')
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonFragment(['status' => 'todo']);
+    }
+
+    public function testIndexFiltersByMultipleStatuses(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->for($user)->create(['status' => 'todo']);
+        Task::factory()->for($user)->create(['status' => 'in_progress']);
+        Task::factory()->for($user)->create(['status' => 'done']);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/tasks?status[]=todo&status[]=done')
+            ->assertOk()
+            ->assertJsonCount(2)
+            ->assertJsonFragment(['status' => 'todo'])
+            ->assertJsonFragment(['status' => 'done']);
+    }
+
+    public function testIndexReturnsAllTasksWhenNoStatusFilter(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->for($user)->create(['status' => 'todo']);
+        Task::factory()->for($user)->create(['status' => 'in_progress']);
+        Task::factory()->for($user)->create(['status' => 'done']);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/tasks')
+            ->assertOk()
+            ->assertJsonCount(3);
+    }
+
+    public function testIndexRejectsInvalidStatusValue(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/tasks?status[]=invalid_status')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['status.0']);
+    }
+
+    public function testIndexCombinesSearchAndStatusFilters(): void
+    {
+        $user = User::factory()->create();
+
+        Task::factory()->for($user)->create(['name' => 'Fix login', 'status' => 'todo']);
+        Task::factory()->for($user)->create(['name' => 'Fix signup', 'status' => 'done']);
+        Task::factory()->for($user)->create(['name' => 'Fix crash', 'status' => 'in_progress']);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/tasks?search=fix&status[]=todo&status[]=done')
+            ->assertOk()
+            ->assertJsonCount(2)
+            ->assertJsonFragment(['name' => 'Fix login'])
+            ->assertJsonFragment(['name' => 'Fix signup']);
+    }
+
     // POST /tasks
 
     public function testStoreCreatesTaskAndReturns201(): void
