@@ -17,7 +17,7 @@ final class TaskControllerTest extends TestCase
 
     // GET /tasks
 
-    public function testIndexReturnsOnlyAuthenticatedUsersTasks(): void
+    public function test_index_returns_only_authenticated_users_tasks(): void
     {
         $userA = User::factory()->create();
         $userB = User::factory()->create();
@@ -31,7 +31,7 @@ final class TaskControllerTest extends TestCase
             ->assertJsonCount(3);
     }
 
-    public function testIndexReturnsTasksInDescendingCreatedAtOrder(): void
+    public function test_index_returns_tasks_in_descending_created_at_order(): void
     {
         $user = User::factory()->create();
 
@@ -45,12 +45,12 @@ final class TaskControllerTest extends TestCase
             ->assertJsonPath('0.id', $newest->id);
     }
 
-    public function testIndexRequiresAuthentication(): void
+    public function test_index_requires_authentication(): void
     {
         $this->getJson('/api/tasks')->assertStatus(401);
     }
 
-    public function testIndexFiltersTasksByNameSearch(): void
+    public function test_index_filters_tasks_by_name_search(): void
     {
         $user = User::factory()->create();
 
@@ -66,7 +66,7 @@ final class TaskControllerTest extends TestCase
             ->assertJsonFragment(['name' => 'Fix dashboard crash']);
     }
 
-    public function testIndexSearchReturnsEmptyWhenNoMatch(): void
+    public function test_index_search_returns_empty_when_no_match(): void
     {
         $user = User::factory()->create();
 
@@ -78,7 +78,7 @@ final class TaskControllerTest extends TestCase
             ->assertJsonCount(0);
     }
 
-    public function testIndexReturnsAllTasksWhenSearchIsEmpty(): void
+    public function test_index_returns_all_tasks_when_search_is_empty(): void
     {
         $user = User::factory()->create();
 
@@ -90,7 +90,7 @@ final class TaskControllerTest extends TestCase
             ->assertJsonCount(3);
     }
 
-    public function testIndexFiltersBySingleStatus(): void
+    public function test_index_filters_by_single_status(): void
     {
         $user = User::factory()->create();
 
@@ -105,7 +105,7 @@ final class TaskControllerTest extends TestCase
             ->assertJsonFragment(['status' => 'todo']);
     }
 
-    public function testIndexFiltersByMultipleStatuses(): void
+    public function test_index_filters_by_multiple_statuses(): void
     {
         $user = User::factory()->create();
 
@@ -121,7 +121,7 @@ final class TaskControllerTest extends TestCase
             ->assertJsonFragment(['status' => 'done']);
     }
 
-    public function testIndexReturnsAllTasksWhenNoStatusFilter(): void
+    public function test_index_returns_all_tasks_when_no_status_filter(): void
     {
         $user = User::factory()->create();
 
@@ -135,7 +135,7 @@ final class TaskControllerTest extends TestCase
             ->assertJsonCount(3);
     }
 
-    public function testIndexRejectsInvalidStatusValue(): void
+    public function test_index_rejects_invalid_status_value(): void
     {
         $user = User::factory()->create();
 
@@ -145,7 +145,7 @@ final class TaskControllerTest extends TestCase
             ->assertJsonValidationErrors(['status.0']);
     }
 
-    public function testIndexCombinesSearchAndStatusFilters(): void
+    public function test_index_combines_search_and_status_filters(): void
     {
         $user = User::factory()->create();
 
@@ -163,7 +163,7 @@ final class TaskControllerTest extends TestCase
 
     // POST /tasks
 
-    public function testStoreCreatesTaskAndReturns201(): void
+    public function test_store_creates_task_and_returns201(): void
     {
         $user = User::factory()->create();
 
@@ -181,7 +181,7 @@ final class TaskControllerTest extends TestCase
         $this->assertDatabaseHas('tasks', ['name' => 'Write tests', 'user_id' => $user->id]);
     }
 
-    public function testStoreAcceptsNullableFields(): void
+    public function test_store_accepts_nullable_fields(): void
     {
         $user = User::factory()->create();
 
@@ -196,7 +196,7 @@ final class TaskControllerTest extends TestCase
     }
 
     #[DataProvider('invalidStorePayloads')]
-    public function testStoreValidationFailsWithInvalidPayload(array $payload, array $expectedErrors): void
+    public function test_store_validation_fails_with_invalid_payload(array $payload, array $expectedErrors): void
     {
         $user = User::factory()->create();
 
@@ -228,7 +228,7 @@ final class TaskControllerTest extends TestCase
         ];
     }
 
-    public function testStoreRequiresAuthentication(): void
+    public function test_store_requires_authentication(): void
     {
         $this->postJson('/api/tasks', ['name' => 'Task', 'status' => 'todo', 'priority' => 'medium'])
             ->assertStatus(401);
@@ -236,7 +236,7 @@ final class TaskControllerTest extends TestCase
 
     // GET /tasks/{id}
 
-    public function testShowReturnsTaskWith200(): void
+    public function test_show_returns_task_with200(): void
     {
         $user = User::factory()->create();
         $task = Task::factory()->for($user)->create();
@@ -247,7 +247,7 @@ final class TaskControllerTest extends TestCase
             ->assertJsonFragment(['id' => $task->id, 'name' => $task->name]);
     }
 
-    public function testShowReturns403ForAnotherUsersTask(): void
+    public function test_show_returns403_for_another_users_task(): void
     {
         $owner = User::factory()->create();
         $other = User::factory()->create();
@@ -258,7 +258,7 @@ final class TaskControllerTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function testShowReturns404ForNonExistentTask(): void
+    public function test_show_returns404_for_non_existent_task(): void
     {
         $user = User::factory()->create();
 
@@ -267,14 +267,14 @@ final class TaskControllerTest extends TestCase
             ->assertStatus(404);
     }
 
-    public function testShowRequiresAuthentication(): void
+    public function test_show_requires_authentication(): void
     {
         $this->getJson('/api/tasks/1')->assertStatus(401);
     }
 
     // PUT /tasks/{id}
 
-    public function testUpdateModifiesTaskAndReturns200(): void
+    public function test_update_modifies_task_and_returns200(): void
     {
         $user = User::factory()->create();
         $task = Task::factory()->for($user)->create(['name' => 'Old Name']);
@@ -285,7 +285,7 @@ final class TaskControllerTest extends TestCase
             ->assertJsonFragment(['name' => 'New Name']);
     }
 
-    public function testUpdateCanChangeSingleField(): void
+    public function test_update_can_change_single_field(): void
     {
         $user = User::factory()->create();
         $task = Task::factory()->for($user)->create(['status' => 'todo']);
@@ -297,7 +297,7 @@ final class TaskControllerTest extends TestCase
     }
 
     #[DataProvider('invalidUpdatePayloads')]
-    public function testUpdateValidationFailsWithInvalidPayload(array $payload): void
+    public function test_update_validation_fails_with_invalid_payload(array $payload): void
     {
         $user = User::factory()->create();
         $task = Task::factory()->for($user)->create();
@@ -317,7 +317,7 @@ final class TaskControllerTest extends TestCase
         ];
     }
 
-    public function testUpdateReturns403ForAnotherUsersTask(): void
+    public function test_update_returns403_for_another_users_task(): void
     {
         $owner = User::factory()->create();
         $other = User::factory()->create();
@@ -328,7 +328,7 @@ final class TaskControllerTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function testUpdateReturns404ForNonExistentTask(): void
+    public function test_update_returns404_for_non_existent_task(): void
     {
         $user = User::factory()->create();
 
@@ -337,14 +337,14 @@ final class TaskControllerTest extends TestCase
             ->assertStatus(404);
     }
 
-    public function testUpdateRequiresAuthentication(): void
+    public function test_update_requires_authentication(): void
     {
         $this->putJson('/api/tasks/1', ['name' => 'Test'])->assertStatus(401);
     }
 
     // DELETE /tasks/{id}
 
-    public function testDestroyDeletesTaskAndReturns204(): void
+    public function test_destroy_deletes_task_and_returns204(): void
     {
         $user = User::factory()->create();
         $task = Task::factory()->for($user)->create();
@@ -356,7 +356,7 @@ final class TaskControllerTest extends TestCase
         $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
     }
 
-    public function testDestroyReturns403ForAnotherUsersTask(): void
+    public function test_destroy_returns403_for_another_users_task(): void
     {
         $owner = User::factory()->create();
         $other = User::factory()->create();
@@ -369,7 +369,7 @@ final class TaskControllerTest extends TestCase
         $this->assertDatabaseHas('tasks', ['id' => $task->id]);
     }
 
-    public function testDestroyReturns404ForNonExistentTask(): void
+    public function test_destroy_returns404_for_non_existent_task(): void
     {
         $user = User::factory()->create();
 
@@ -378,7 +378,7 @@ final class TaskControllerTest extends TestCase
             ->assertStatus(404);
     }
 
-    public function testDestroyRequiresAuthentication(): void
+    public function test_destroy_requires_authentication(): void
     {
         $this->deleteJson('/api/tasks/1')->assertStatus(401);
     }

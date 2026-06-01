@@ -14,7 +14,7 @@ final class AuthControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testRegisterCreatesUserAndReturnsTokenWith201(): void
+    public function test_register_creates_user_and_returns_token_with201(): void
     {
         $response = $this->postJson('/api/register', [
             'name' => 'Alice',
@@ -30,7 +30,7 @@ final class AuthControllerTest extends TestCase
     }
 
     #[DataProvider('invalidRegisterPayloads')]
-    public function testRegisterValidationFailsWithInvalidPayload(array $payload, array $expectedErrors): void
+    public function test_register_validation_fails_with_invalid_payload(array $payload, array $expectedErrors): void
     {
         $this->postJson('/api/register', $payload)
             ->assertStatus(422)
@@ -78,7 +78,7 @@ final class AuthControllerTest extends TestCase
         ];
     }
 
-    public function testRegisterFailsWith422WhenEmailAlreadyTaken(): void
+    public function test_register_fails_with422_when_email_already_taken(): void
     {
         User::factory()->create(['email' => 'alice@example.com']);
 
@@ -88,10 +88,10 @@ final class AuthControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
         ])->assertStatus(422)
-          ->assertJsonValidationErrors(['email']);
+            ->assertJsonValidationErrors(['email']);
     }
 
-    public function testLoginReturnsUserAndTokenWith200(): void
+    public function test_login_returns_user_and_token_with200(): void
     {
         $user = User::factory()->create();
 
@@ -99,12 +99,12 @@ final class AuthControllerTest extends TestCase
             'email' => $user->email,
             'password' => 'password',
         ])->assertOk()
-          ->assertJsonStructure(['user' => ['id', 'name', 'email'], 'token'])
-          ->assertJsonFragment(['email' => $user->email]);
+            ->assertJsonStructure(['user' => ['id', 'name', 'email'], 'token'])
+            ->assertJsonFragment(['email' => $user->email]);
     }
 
     #[DataProvider('invalidLoginPayloads')]
-    public function testLoginValidationFailsWithInvalidPayload(array $payload): void
+    public function test_login_validation_fails_with_invalid_payload(array $payload): void
     {
         $this->postJson('/api/login', $payload)
             ->assertStatus(422);
@@ -119,7 +119,7 @@ final class AuthControllerTest extends TestCase
         ];
     }
 
-    public function testLoginFailsWith422ForWrongPassword(): void
+    public function test_login_fails_with422_for_wrong_password(): void
     {
         $user = User::factory()->create();
 
@@ -127,24 +127,24 @@ final class AuthControllerTest extends TestCase
             'email' => $user->email,
             'password' => 'wrong-password',
         ])->assertStatus(422)
-          ->assertJsonValidationErrors(['email']);
+            ->assertJsonValidationErrors(['email']);
     }
 
-    public function testLoginFailsWith422ForNonExistentEmail(): void
+    public function test_login_fails_with422_for_non_existent_email(): void
     {
         $this->postJson('/api/login', [
             'email' => 'nobody@example.com',
             'password' => 'password123',
         ])->assertStatus(422)
-          ->assertJsonValidationErrors(['email']);
+            ->assertJsonValidationErrors(['email']);
     }
 
-    public function testLogoutDeletesTokenAndReturns200(): void
+    public function test_logout_deletes_token_and_returns200(): void
     {
         $user = User::factory()->create();
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        $this->withHeader('Authorization', 'Bearer ' . $token)
+        $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/logout')
             ->assertOk()
             ->assertJson(['message' => 'Logged out successfully']);
@@ -152,7 +152,7 @@ final class AuthControllerTest extends TestCase
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
-    public function testLogoutRequiresAuthentication(): void
+    public function test_logout_requires_authentication(): void
     {
         $this->postJson('/api/logout')->assertStatus(401);
     }

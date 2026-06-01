@@ -4,15 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Task;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function index(Request $request): \Illuminate\Http\JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $request->validate([
-            'search'   => ['nullable', 'string', 'max:255'],
-            'status'   => ['nullable', 'array'],
+            'search' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'array'],
             'status.*' => ['string', 'in:todo,in_progress,done'],
         ]);
 
