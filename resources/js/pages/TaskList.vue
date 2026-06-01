@@ -195,6 +195,7 @@ const clearStatusFilter = () => {
 
 let debounceTimer;
 watch(search, () => {
+  loading.value = true;
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(fetchTasks, 300);
 });
