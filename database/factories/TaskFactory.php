@@ -1,7 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
+use App\Enums\TaskPriority;
+use App\Enums\TaskStatus;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -13,11 +17,6 @@ class TaskFactory extends Factory
 {
     protected $model = Task::class;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     private static array $taskNames = [
         'Set up CI/CD pipeline',
         'Fix login page validation',
@@ -57,8 +56,8 @@ class TaskFactory extends Factory
             'user_id' => User::factory(),
             'name' => $this->faker->randomElement(self::$taskNames),
             'description' => $this->faker->paragraph(),
-            'status' => $this->faker->randomElement(['todo', 'in_progress', 'done']),
-            'priority' => $this->faker->randomElement(['low', 'medium', 'high']),
+            'status' => $this->faker->randomElement(TaskStatus::cases()),
+            'priority' => $this->faker->randomElement(TaskPriority::cases()),
             'due_date' => $this->faker->optional(0.7)->dateTimeBetween('-1 week', '+1 month')?->format('Y-m-d'),
         ];
     }

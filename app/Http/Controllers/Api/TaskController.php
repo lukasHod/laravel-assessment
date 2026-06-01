@@ -1,22 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Task\IndexTaskRequest;
+use App\Http\Requests\Task\StoreTaskRequest;
+use App\Http\Requests\Task\UpdateTaskRequest;
 use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(IndexTaskRequest $request): JsonResponse
     {
-        $request->validate([
-            'search' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'array'],
-            'status.*' => ['string', 'in:todo,in_progress,done'],
-        ]);
-
         $query = $request->user()->tasks()->latest();
 
         $search = $request->string('search')->trim()->value();
@@ -31,66 +30,32 @@ class TaskController extends Controller
         return response()->json($query->get());
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StoreTaskRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'required|in:todo,in_progress,done',
-            'priority' => 'required|in:low,medium,high',
-            'due_date' => 'nullable|date',
-        ]);
-
-        $task = $request->user()->tasks()->create($validated);
+        $task = $request->user()->tasks()->create($request->validated());
 
         return response()->json($task, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Request $request, Task $task)
+    public function show(Request $request, Task $task): JsonResponse
     {
-        if ($task->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorize('view', $task);
 
         return response()->json($task);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Task $task)
+    public function update(UpdateTaskRequest $request, Task $task): JsonResponse
     {
-        if ($task->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorize('update', $task);
 
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'sometimes|required|in:todo,in_progress,done',
-            'priority' => 'sometimes|required|in:low,medium,high',
-            'due_date' => 'nullable|date',
-        ]);
-
-        $task->update($validated);
+        $task->update($request->validated());
 
         return response()->json($task);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Request $request, Task $task)
+    public function destroy(Request $request, Task $task): JsonResponse
     {
-        if ($task->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorize('delete', $task);
 
         $task->delete();
 
