@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\CreateTaskAction;
+use App\Actions\DeleteTaskAction;
+use App\Actions\ListUserTasksAction;
+use App\Actions\UpdateTaskAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\IndexTaskRequest;
 use App\Http\Requests\StoreTaskRequest;
@@ -14,25 +18,20 @@ use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    public function index(IndexTaskRequest $request): JsonResponse
+    public function index(IndexTaskRequest $request, ListUserTasksAction $listUserTasksAction): JsonResponse
     {
-        $query = $request->user()->tasks()->latest();
+        $tasks = $listUserTasksAction(
+            $request->user(),
+            $request->string('search')->trim()->value() ?: null,
+            $request->input('status', []),
+        );
 
-        $search = $request->string('search')->trim()->value();
-        if ($search) {
-            $query->where('name', 'like', "%{$search}%");
-        }
-
-        if ($request->filled('status')) {
-            $query->whereIn('status', $request->input('status'));
-        }
-
-        return response()->json($query->get());
+        return response()->json($tasks);
     }
 
-    public function store(StoreTaskRequest $request): JsonResponse
+    public function store(StoreTaskRequest $request, CreateTaskAction $createTaskAction): JsonResponse
     {
-        $task = $request->user()->tasks()->create($request->validated());
+        $task = $createTaskAction($request->user(), $request->validated());
 
         return response()->json($task, 201);
     }
@@ -44,20 +43,20 @@ class TaskController extends Controller
         return response()->json($task);
     }
 
-    public function update(UpdateTaskRequest $request, Task $task): JsonResponse
+    public function update(UpdateTaskRequest $request, Task $task, UpdateTaskAction $updateTaskAction): JsonResponse
     {
         $this->authorize('update', $task);
 
-        $task->update($request->validated());
+        $task = $updateTaskAction($task, $request->validated());
 
         return response()->json($task);
     }
 
-    public function destroy(Request $request, Task $task): JsonResponse
+    public function destroy(Request $request, Task $task, DeleteTaskAction $deleteTaskAction): JsonResponse
     {
         $this->authorize('delete', $task);
 
-        $task->delete();
+        $deleteTaskAction($task);
 
         return response()->json(null, 204);
     }

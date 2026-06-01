@@ -4,46 +4,34 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\LoginUserAction;
+use App\Actions\LogoutUserAction;
+use App\Actions\RegisterUserAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(RegisterRequest $request): JsonResponse
+    public function register(RegisterRequest $request, RegisterUserAction $registerUserAction): JsonResponse
     {
-        $user = User::create($request->safe()->only(['name', 'email', 'password']));
+        $result = $registerUserAction(...$request->safe()->only(['name', 'email', 'password']));
 
-        return response()->json([
-            'user' => $user,
-            'token' => $user->createToken('auth_token')->plainTextToken,
-        ], 201);
+        return response()->json(['user' => $result->user, 'token' => $result->token], 201);
     }
 
-    public function login(LoginRequest $request): JsonResponse
+    public function login(LoginRequest $request, LoginUserAction $loginUserAction): JsonResponse
     {
-        $user = User::where('email', $request->email)->first();
+        $result = $loginUserAction($request->email, $request->password);
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
-        }
-
-        return response()->json([
-            'user' => $user,
-            'token' => $user->createToken('auth_token')->plainTextToken,
-        ]);
+        return response()->json(['user' => $result->user, 'token' => $result->token]);
     }
 
-    public function logout(Request $request): JsonResponse
+    public function logout(Request $request, LogoutUserAction $logoutUserAction): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $logoutUserAction($request->user());
 
         return response()->json(['message' => 'Logged out successfully']);
     }
