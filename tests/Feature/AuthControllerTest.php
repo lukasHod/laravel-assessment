@@ -14,7 +14,7 @@ final class AuthControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_register_creates_user_and_returns_token_with201(): void
+    public function testRegisterCreatesUserAndReturnsTokenWith201(): void
     {
         $response = $this->postJson('/api/register', [
             'name' => 'Alice',
@@ -30,7 +30,7 @@ final class AuthControllerTest extends TestCase
     }
 
     #[DataProvider('invalidRegisterPayloads')]
-    public function test_register_validation_fails_with_invalid_payload(array $payload, array $expectedErrors): void
+    public function testRegisterValidationFailsWithInvalidPayload(array $payload, array $expectedErrors): void
     {
         $this->postJson('/api/register', $payload)
             ->assertStatus(422)
@@ -78,7 +78,7 @@ final class AuthControllerTest extends TestCase
         ];
     }
 
-    public function test_register_fails_with422_when_email_already_taken(): void
+    public function testRegisterFailsWith422WhenEmailAlreadyTaken(): void
     {
         User::factory()->create(['email' => 'alice@example.com']);
 
@@ -91,7 +91,7 @@ final class AuthControllerTest extends TestCase
             ->assertJsonValidationErrors(['email']);
     }
 
-    public function test_login_returns_user_and_token_with200(): void
+    public function testLoginReturnsUserAndTokenWith200(): void
     {
         $user = User::factory()->create();
 
@@ -104,7 +104,7 @@ final class AuthControllerTest extends TestCase
     }
 
     #[DataProvider('invalidLoginPayloads')]
-    public function test_login_validation_fails_with_invalid_payload(array $payload): void
+    public function testLoginValidationFailsWithInvalidPayload(array $payload): void
     {
         $this->postJson('/api/login', $payload)
             ->assertStatus(422);
@@ -119,7 +119,7 @@ final class AuthControllerTest extends TestCase
         ];
     }
 
-    public function test_login_fails_with422_for_wrong_password(): void
+    public function testLoginFailsWith422ForWrongPassword(): void
     {
         $user = User::factory()->create();
 
@@ -130,7 +130,7 @@ final class AuthControllerTest extends TestCase
             ->assertJsonValidationErrors(['email']);
     }
 
-    public function test_login_fails_with422_for_non_existent_email(): void
+    public function testLoginFailsWith422ForNonExistentEmail(): void
     {
         $this->postJson('/api/login', [
             'email' => 'nobody@example.com',
@@ -139,7 +139,7 @@ final class AuthControllerTest extends TestCase
             ->assertJsonValidationErrors(['email']);
     }
 
-    public function test_logout_deletes_token_and_returns200(): void
+    public function testLogoutDeletesTokenAndReturns200(): void
     {
         $user = User::factory()->create();
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -152,7 +152,7 @@ final class AuthControllerTest extends TestCase
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
-    public function test_logout_requires_authentication(): void
+    public function testLogoutRequiresAuthentication(): void
     {
         $this->postJson('/api/logout')->assertStatus(401);
     }
