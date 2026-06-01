@@ -88,7 +88,7 @@ final class AuthControllerTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
         ])->assertStatus(422)
-          ->assertJsonValidationErrors(['email']);
+            ->assertJsonValidationErrors(['email']);
     }
 
     public function testLoginReturnsUserAndTokenWith200(): void
@@ -99,8 +99,8 @@ final class AuthControllerTest extends TestCase
             'email' => $user->email,
             'password' => 'password',
         ])->assertOk()
-          ->assertJsonStructure(['user' => ['id', 'name', 'email'], 'token'])
-          ->assertJsonFragment(['email' => $user->email]);
+            ->assertJsonStructure(['user' => ['id', 'name', 'email'], 'token'])
+            ->assertJsonFragment(['email' => $user->email]);
     }
 
     #[DataProvider('invalidLoginPayloads')]
@@ -127,7 +127,7 @@ final class AuthControllerTest extends TestCase
             'email' => $user->email,
             'password' => 'wrong-password',
         ])->assertStatus(422)
-          ->assertJsonValidationErrors(['email']);
+            ->assertJsonValidationErrors(['email']);
     }
 
     public function testLoginFailsWith422ForNonExistentEmail(): void
@@ -136,7 +136,7 @@ final class AuthControllerTest extends TestCase
             'email' => 'nobody@example.com',
             'password' => 'password123',
         ])->assertStatus(422)
-          ->assertJsonValidationErrors(['email']);
+            ->assertJsonValidationErrors(['email']);
     }
 
     public function testLogoutDeletesTokenAndReturns200(): void
@@ -144,7 +144,7 @@ final class AuthControllerTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        $this->withHeader('Authorization', 'Bearer ' . $token)
+        $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/logout')
             ->assertOk()
             ->assertJson(['message' => 'Logged out successfully']);

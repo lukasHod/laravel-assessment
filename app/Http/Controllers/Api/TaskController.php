@@ -4,18 +4,31 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Task;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        return response()->json(
-            $request->user()->tasks()->latest()->get()
-        );
+        $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'array'],
+            'status.*' => ['string', 'in:todo,in_progress,done'],
+        ]);
+
+        $query = $request->user()->tasks()->latest();
+
+        $search = $request->string('search')->trim()->value();
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        if ($request->filled('status')) {
+            $query->whereIn('status', $request->input('status'));
+        }
+
+        return response()->json($query->get());
     }
 
     /**

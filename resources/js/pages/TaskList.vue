@@ -16,16 +16,59 @@
       </div>
     </div>
 
+    <!-- Filter bar -->
+    <div class="mt-6 bg-white rounded-xl border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div class="flex-1">
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Search tasks by name…"
+          class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+        />
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs font-medium text-gray-500 mr-1">Status:</span>
+
+        <button
+          type="button"
+          @click="clearStatusFilter"
+          class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+          :class="selectedStatuses.length === 0
+            ? 'bg-primary-50 text-primary-700 border-primary-300'
+            : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'"
+        >
+          All
+        </button>
+
+        <button
+          v-for="opt in statusOptions"
+          :key="opt.value"
+          type="button"
+          @click="toggleStatus(opt.value)"
+          class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+          :class="selectedStatuses.includes(opt.value)
+            ? opt.activeClass
+            : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'"
+        >
+          {{ opt.label }}
+        </button>
+      </div>
+    </div>
+
     <!-- Loading state -->
     <div v-if="loading" class="mt-10 flex justify-center">
       <div class="text-gray-400 text-sm">Loading tasks…</div>
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="tasks.length === 0" class="mt-10 text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-200">
-      <p class="text-gray-500 font-medium">No tasks yet.</p>
-      <p class="text-gray-400 text-sm mt-1">Get started by creating your first task.</p>
+    <div v-else-if="tasks.length === 0" class="mt-6 text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-200">
+      <p class="text-gray-500 font-medium">No tasks found.</p>
+      <p class="text-gray-400 text-sm mt-1">
+        {{ hasActiveFilters ? 'Try adjusting your search or filters.' : 'Get started by creating your first task.' }}
+      </p>
       <router-link
+        v-if="!hasActiveFilters"
         to="/tasks/create"
         class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-colors"
       >
@@ -98,18 +141,37 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '../composables/useApi.js';
 
 const router = useRouter();
 const tasks = ref([]);
 const loading = ref(true);
+const search = ref('');
+const selectedStatuses = ref([]);
+
+const statusOptions = [
+  { value: 'todo',        label: 'To Do',      activeClass: 'bg-gray-100 text-gray-700 border-gray-300' },
+  { value: 'in_progress', label: 'In Progress', activeClass: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
+  { value: 'done',        label: 'Done',        activeClass: 'bg-green-100 text-green-800 border-green-300' },
+];
+
+const hasActiveFilters = computed(
+  () => search.value.trim() !== '' || selectedStatuses.value.length > 0,
+);
 
 const fetchTasks = async () => {
   loading.value = true;
   try {
-    const response = await api.get('/tasks');
+    const params = {};
+    if (search.value.trim()) {
+      params.search = search.value.trim();
+    }
+    if (selectedStatuses.value.length > 0) {
+      params.status = selectedStatuses.value;
+    }
+    const response = await api.get('/tasks', { params });
     tasks.value = response.data;
   } catch (err) {
     console.error('Failed to fetch tasks:', err);
@@ -117,6 +179,28 @@ const fetchTasks = async () => {
     loading.value = false;
   }
 };
+
+const toggleStatus = (value) => {
+  const index = selectedStatuses.value.indexOf(value);
+  if (index === -1) {
+    selectedStatuses.value = [...selectedStatuses.value, value];
+  } else {
+    selectedStatuses.value = selectedStatuses.value.filter((s) => s !== value);
+  }
+};
+
+const clearStatusFilter = () => {
+  selectedStatuses.value = [];
+};
+
+let debounceTimer;
+watch(search, () => {
+  loading.value = true;
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(fetchTasks, 300);
+});
+
+watch(selectedStatuses, fetchTasks);
 
 const deleteTask = async (id) => {
   if (!confirm('Delete this task? This cannot be undone.')) return;
